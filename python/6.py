@@ -1,13 +1,23 @@
 from collections import Counter
 from util import read_lines
+from util import read_paragraphs
 
-result = 0
-answers = ""
-for line in read_lines("../input6.txt"):
-    if not line:
-        result += len(Counter(answers))
-        answers = ""
-    else:
-        answers += line
+def part1():
+    result = sum(
+        len(Counter("".join(lines)))
+        for lines in read_paragraphs(read_lines("../input6.txt"))
+    )
 
-print(result)
+    print(result)
+
+
+def part2():
+    result = sum(
+        len(set.intersection(*(set(line) for line in lines)))
+        for lines in read_paragraphs(read_lines("../input6.txt")))
+
+    print(result)
+
+
+part1()
+part2()
