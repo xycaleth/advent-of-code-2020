@@ -21,7 +21,6 @@ fn main() -> Result<(), std::io::Error> {
             answered.clear();
         } else {
             answered.extend(line.chars());
-            println!("{}", line);
         }
     }
 
