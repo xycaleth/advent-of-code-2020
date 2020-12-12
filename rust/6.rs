@@ -1,36 +1,15 @@
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
-use std::path::Path;
+fn main() {
+    let input = include_str!("../input6.txt").replace("\r\n", "\n");
 
-fn main() -> Result<(), std::io::Error> {
-    let path = Path::new("../input6.txt");
-
-    let file = File::open(&path)?;
-    let reader = BufReader::new(file);
-
-    let mut yeses = Vec::new();
-    let mut answered = Vec::new();
-
-    for line in reader.lines().filter_map(Result::ok) {
-        if line.is_empty() {
-            answered.sort();
-            answered.dedup();
-            yeses.push(answered.len());
-
-            answered.clear();
-        } else {
-            answered.extend(line.chars());
-        }
-    }
-
-    answered.sort();
-    answered.dedup();
-    yeses.push(answered.len());
-
-    answered.clear();
-
-    println!("{}", yeses.iter().sum::<usize>());
-
-    Ok(())
+    // part 1
+    let answer: usize = input
+        .split("\n\n")
+        .map(|group| {
+            let mut chars = group.chars().filter(|c| *c != '\n').collect::<Vec<char>>();
+            chars.sort();
+            chars.dedup();
+            chars.iter().count()
+        })
+        .sum();
+    println!("{}", answer);
 }
