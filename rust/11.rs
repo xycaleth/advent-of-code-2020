@@ -1,8 +1,4 @@
 use std::fmt::{self, Display, Formatter};
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
-use std::path::Path;
 
 #[derive(PartialEq, Clone, Copy)]
 enum Cell {
@@ -29,6 +25,17 @@ impl Display for Cell {
     }
 }
 
+impl Cell {
+    fn from(c: char) -> Self {
+        match c {
+            '.' => Cell::Floor,
+            'L' => Cell::EmptySeat,
+            '#' => Cell::OccupiedSeat,
+            _ => panic!("Invalid char '{}'", c),
+        }
+    }
+}
+
 impl Display for Seats {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         for row in self.state.iter() {
@@ -42,21 +49,13 @@ impl Display for Seats {
 }
 
 impl Seats {
-    fn new() -> Self {
-        Seats { state: Vec::new() }
-    }
-
-    fn add_row(&mut self, row: &str) {
-        self.state.push(
-            row.chars()
-                .map(|c| match c {
-                    '.' => Cell::Floor,
-                    'L' => Cell::EmptySeat,
-                    '#' => Cell::OccupiedSeat,
-                    _ => panic!("Invalid char '{}'", c),
-                })
-                .collect::<Vec<_>>(),
-        );
+    fn parse(input: &str) -> Self {
+        Seats {
+            state: input
+                .lines()
+                .map(|line| line.chars().map(&Cell::from).collect::<Vec<_>>())
+                .collect(),
+        }
     }
 
     fn step(
@@ -94,7 +93,7 @@ impl Seats {
 
         let changed = self.state == new_state;
         self.state = new_state;
-        return changed;
+        changed
     }
 
     fn get_cell(&self, row: i32, seat: i32) -> Option<Cell> {
@@ -131,7 +130,7 @@ fn num_neighbors1(seats: &Seats, row: usize, seat: usize) -> i32 {
     let mut neighbours = 0;
 
     //println!("Checking neighbours for row {} seat {}", row, seat);
-    for offset in [
+    for (step_x, step_y) in [
         (-1, -1),
         (0, -1),
         (1, -1),
@@ -143,8 +142,8 @@ fn num_neighbors1(seats: &Seats, row: usize, seat: usize) -> i32 {
     ]
     .iter()
     {
-        let x = (seat as i32) + offset.0;
-        let y = (row as i32) + offset.1;
+        let x = (seat as i32) + step_x;
+        let y = (row as i32) + step_y;
 
         if seats.get_cell(y, x) == Some(Cell::OccupiedSeat) {
             //println!("  row {} seat {} is a neighbour!", y, x);
@@ -159,7 +158,7 @@ fn num_neighbors2(seats: &Seats, row: usize, seat: usize) -> i32 {
     let mut neighbours = 0;
 
     //println!("Checking neighbours for row {} seat {}", row, seat);
-    for offset in [
+    for (step_x, step_y) in [
         (-1, -1),
         (0, -1),
         (1, -1),
@@ -171,8 +170,8 @@ fn num_neighbors2(seats: &Seats, row: usize, seat: usize) -> i32 {
     ]
     .iter()
     {
-        let mut x = (seat as i32) + offset.0;
-        let mut y = (row as i32) + offset.1;
+        let mut x = (seat as i32) + step_x;
+        let mut y = (row as i32) + step_y;
 
         loop {
             match seats.get_cell(y, x) {
@@ -185,25 +184,18 @@ fn num_neighbors2(seats: &Seats, row: usize, seat: usize) -> i32 {
                 _ => (),
             }
 
-            x += offset.0;
-            y += offset.1;
+            x += step_x;
+            y += step_y;
         }
     }
 
     neighbours
 }
 
-fn main() -> Result<(), std::io::Error> {
-    let path = Path::new("../input11.txt");
-    let file = File::open(&path)?;
-    let reader = BufReader::new(file);
+fn main() {
+    let input = include_str!("../input11.txt");
 
-    let lines = reader.lines().filter_map(Result::ok);
-
-    let mut seats = Seats::new();
-    for line in lines {
-        seats.add_row(&line);
-    }
+    let mut seats = Seats::parse(input);
 
     while !seats.step(4, &num_neighbors1) {}
     println!("{}", seats.num_occupied());
@@ -211,6 +203,4 @@ fn main() -> Result<(), std::io::Error> {
     seats.reset();
     while !seats.step(5, &num_neighbors2) {}
     println!("{}", seats.num_occupied());
-
-    Ok(())
 }
