@@ -1,16 +1,18 @@
+use std::cmp::Reverse;
+
 fn main() {
     let input = include_str!("../input13.txt");
     let mut lines = input.lines();
 
     let earliest_time: u64 = lines.next().unwrap().parse().unwrap();
-    let buses: Vec<(usize, u64)> = lines
+    let buses: Vec<(u64, u64)> = lines
         .next()
         .unwrap()
         .split(",")
         .enumerate()
         .map(|(index, bus)| (index, bus.parse::<u64>()))
         .filter(|(_, bus)| bus.is_ok())
-        .map(|(index, bus)| (index, bus.unwrap()))
+        .map(|(index, bus)| (index as u64, bus.unwrap()))
         .collect();
 
     fn next_departure_after(t: u64, freq: u64) -> u64 {
@@ -29,20 +31,21 @@ fn main() {
     println!("{}", bus * (best_time - earliest_time));
 
     // part 2
-    let (least_freq_index, least_freq_bus) = buses.iter().max_by_key(|(_, bus)| *bus).unwrap();
+    let mut buses = buses.clone();
+    buses.sort_by_key(|(_, bus)| Reverse(*bus));
 
-    let y = (next_departure_after(100000000000000, *least_freq_bus)..)
-        .step_by(*least_freq_bus as usize)
-        .find(|depart_time| {
-            buses.iter().all(|(bus_index, bus)| {
-                let expected_depart_time =
-                    (*depart_time as usize - *least_freq_index) + bus_index;
-                (expected_depart_time % *bus as usize) == 0
-            })
-        });
+    let mut step = 1;
+    let mut t = 0;
 
-    match y {
-        Some(num) => println!("t = {}", num - least_freq_index),
-        None => println!("No solution"),
+    for (index, bus) in buses {
+        t += step;
+
+        while ((t + index) % bus) != 0 {
+            t += step;
+        }
+
+        step *= bus;
     }
+
+    println!("t = {}", t);
 }
