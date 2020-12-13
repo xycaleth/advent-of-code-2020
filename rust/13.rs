@@ -29,12 +29,6 @@ fn main() {
     println!("{}", bus * (best_time - earliest_time));
 
     // part 2
-
-    // solving a matrix?
-    // t0 * A = 0
-    // t1 * B = 0
-    // t1 * B - t0 * A = d
-
     let (least_freq_index, least_freq_bus) = buses.iter().max_by_key(|(_, bus)| *bus).unwrap();
 
     let y = (next_departure_after(100000000000000, *least_freq_bus)..)
@@ -48,7 +42,7 @@ fn main() {
         });
 
     match y {
-        Some(num) => println!("y = {}. earliest timestamp", num),
+        Some(num) => println!("t = {}", num - least_freq_index),
         None => println!("No solution"),
     }
 }
