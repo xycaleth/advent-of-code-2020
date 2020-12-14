@@ -36,35 +36,27 @@ fn write_v2(
     address: usize,
     value: u64,
     set_bits: u64,
-    clear_bits: u64,
+    _clear_bits: u64,
     x_bits: u64,
 ) {
-    let decoded_address: usize = ((address as u64) | set_bits) as usize;
+    let base_address: usize = ((address as u64) | set_bits) as usize;
 
     if x_bits == 0 {
-        memory.write(decoded_address, value);
+        memory.write(base_address, value);
     } else {
-        for bit_index in 0..36 {
-            let bit = 1u64 << bit_index;
-            if (x_bits & bit) != 0 {
-                let changed_x_bits = x_bits & !bit;
-                write_v2(
-                    memory,
-                    ((decoded_address as u64) | bit) as usize,
-                    value,
-                    set_bits,
-                    clear_bits,
-                    changed_x_bits,
-                );
-                write_v2(
-                    memory,
-                    ((decoded_address as u64) & !bit) as usize,
-                    value,
-                    set_bits,
-                    clear_bits,
-                    changed_x_bits,
-                );
+        let floating_bits: Vec<u64> = (0..36).filter(|n| (x_bits & (1u64 << n)) != 0).collect();
+        let num_floating = floating_bits.len();
+        for i in 0..2usize.pow(num_floating as u32) {
+            let mut this_address = base_address;
+            for bit in 0..num_floating {
+                if (i & (1 << bit)) != 0 {
+                    this_address |= (1u64 << floating_bits[bit]) as usize;
+                } else {
+                    this_address &= !(1u64 << floating_bits[bit]) as usize;
+                }
             }
+
+            memory.write(this_address, value);
         }
     }
 }
@@ -83,11 +75,11 @@ fn run(input: &str, write: &dyn Fn(&mut Memory, usize, u64, u64, u64, u64)) -> u
             set_bits = 0u64;
             clear_bits = 0xffffffffffffffffu64;
             x_bits = 0u64;
-            for (pos, c) in mask.chars().enumerate() {
+            for (pos, c) in mask.chars().rev().enumerate() {
                 match c {
-                    'X' => x_bits |= 1u64 << (35 - pos),
-                    '1' => set_bits |= 1u64 << (35 - pos),
-                    '0' => clear_bits &= !(1u64 << (35 - pos)),
+                    'X' => x_bits |= 1u64 << pos,
+                    '1' => set_bits |= 1u64 << pos,
+                    '0' => clear_bits &= !(1u64 << pos),
                     _ => (),
                 }
             }
